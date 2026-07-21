@@ -43,3 +43,20 @@ body {
     @apply text-sm font-medium text-red-700;
   }
 }
+
+@keyframes scan-sweep {
+  0%, 100% { top: 0; }
+  50% { top: 100%; }
+}
+.animate-scan-sweep {
+  animation: scan-sweep 1.6s ease-in-out infinite;
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.4); opacity: 0; }
+  70% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-pop-in {
+  animation: pop-in 0.3s ease-out;
+}
