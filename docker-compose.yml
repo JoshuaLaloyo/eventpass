@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: eventpass
+      POSTGRES_PASSWORD: eventpass
+      POSTGRES_DB: eventpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - eventpass_db_data:/var/lib/postgresql/data
+
+volumes:
+  eventpass_db_data:

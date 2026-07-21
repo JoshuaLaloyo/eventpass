@@ -1,0 +1,166 @@
+// EventPass MVP schema — matches EventPass_ERD_MVP.docx
+// (One addition noted for Jay: Orders carries ticketTypeId + quantity so the
+// payment webhook knows what to fulfill. Single ticket type per order in MVP.)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ORGANIZER
+  GATE_STAFF
+  ADMIN
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum RefundPolicy {
+  NO_REFUNDS
+  UP_TO_7_DAYS
+  UP_TO_24_HOURS
+  ONLY_IF_CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum ProcessorStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+}
+
+enum PaymentMethod {
+  MTN_MOMO
+  AIRTEL_MONEY
+  CARD
+  MOCK
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  VOID
+}
+
+enum ScanResult {
+  ACCEPTED
+  REJECTED_USED
+  REJECTED_UNPAID
+  REJECTED_WRONG_EVENT
+  REJECTED_NOT_FOUND
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String?
+  role         Role     @default(CUSTOMER)
+  organizationName String?
+  createdAt    DateTime @default(now())
+
+  events Event[] @relation("OrganizerEvents")
+  orders Order[]
+  scans  Scan[]
+}
+
+model Event {
+  id           String       @id @default(uuid())
+  organizerId  String
+  organizer    User         @relation("OrganizerEvents", fields: [organizerId], references: [id])
+  title        String
+  venue        String
+  date         DateTime
+  description  String       @default("")
+  posterUrl    String?
+  status       EventStatus  @default(DRAFT)
+  refundPolicy RefundPolicy @default(NO_REFUNDS)
+  createdAt    DateTime     @default(now())
+
+  ticketTypes TicketType[]
+  orders      Order[]
+}
+
+model TicketType {
+  id           String @id @default(uuid())
+  eventId      String
+  event        Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name         String
+  price        Int // UGX, whole number
+  quantity     Int
+  quantitySold Int    @default(0)
+
+  tickets Ticket[]
+  orders  Order[]
+}
+
+model Order {
+  id               String        @id @default(uuid())
+  userId           String
+  user             User          @relation(fields: [userId], references: [id])
+  eventId          String
+  event            Event         @relation(fields: [eventId], references: [id])
+  ticketTypeId     String
+  ticketType       TicketType    @relation(fields: [ticketTypeId], references: [id])
+  quantity         Int
+  paymentStatus    PaymentStatus @default(PENDING)
+  totalAmount      Int // UGX
+  phone            String?
+  policyAcceptedAt DateTime
+  createdAt        DateTime      @default(now())
+
+  tickets Ticket[]
+  payment Payment?
+}
+
+model Payment {
+  id                    String          @id @default(uuid())
+  orderId               String          @unique
+  order                 Order           @relation(fields: [orderId], references: [id])
+  amount                Int
+  processorRef          String          @unique
+  method                PaymentMethod
+  commissionAmount      Int
+  organizerPayoutAmount Int
+  status                ProcessorStatus
+  createdAt             DateTime        @default(now())
+}
+
+model Ticket {
+  id           String       @id @default(uuid())
+  orderId      String
+  order        Order        @relation(fields: [orderId], references: [id])
+  ticketTypeId String
+  ticketType   TicketType   @relation(fields: [ticketTypeId], references: [id])
+  qrCodeUuid   String       @unique @default(uuid())
+  status       TicketStatus @default(VALID)
+  scannedAt    DateTime?
+  createdAt    DateTime     @default(now())
+
+  scans Scan[]
+}
+
+model Scan {
+  id        String     @id @default(uuid())
+  ticketId  String?
+  ticket    Ticket?    @relation(fields: [ticketId], references: [id])
+  scannedBy String
+  scanner   User       @relation(fields: [scannedBy], references: [id])
+  gate      String     @default("Main gate")
+  timestamp DateTime   @default(now())
+  result    ScanResult
+}
