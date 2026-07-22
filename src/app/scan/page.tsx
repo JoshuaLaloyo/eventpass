@@ -127,6 +127,8 @@ export default function Scanner() {
 
   const accepted = current?.result === "ACCEPTED";
   const activeEvent = events.find((e) => e.id === eventId);
+  const admittedCount = history.filter((h) => h.result === "ACCEPTED").length;
+  const rejectedCount = history.length - admittedCount;
 
   return (
     <div className="mx-auto max-w-md">
@@ -191,22 +193,27 @@ export default function Scanner() {
             </div>
           )}
         </div>
-
-        {history.length > 0 && (
-          <div className="mt-4 divide-y divide-ink-900/10 border-t border-ink-900/10">
-            <p className="pt-3 text-xs font-semibold uppercase text-ink-700">Recent scans</p>
-            {history.map((h, i) => (
-              <div key={i} className="flex items-center justify-between py-3 text-sm">
-                <span className={h.result === "ACCEPTED" ? "font-semibold text-green-700" : "font-semibold text-red-700"}>
-                  {h.result === "ACCEPTED" ? "Admitted" : "Rejected"}
-                </span>
-                <span className="text-ink-700">{h.result === "ACCEPTED" ? `${h.attendee}` : h.reason}</span>
-                <span className="text-xs text-ink-700/70">{h.at}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
+
+      {history.length > 0 && (
+        <div className="card mt-4 divide-y divide-ink-900/10 p-4">
+          <div className="flex items-center justify-between pb-3">
+            <p className="text-xs font-semibold uppercase text-ink-700">Scan log</p>
+            <p className="text-xs font-semibold text-ink-700">
+              <span className="text-green-700">{admittedCount} admitted</span> · <span className="text-red-700">{rejectedCount} rejected</span>
+            </p>
+          </div>
+          {history.map((h, i) => (
+            <div key={i} className="flex items-center justify-between py-3 text-sm">
+              <span className={h.result === "ACCEPTED" ? "font-semibold text-green-700" : "font-semibold text-red-700"}>
+                {h.result === "ACCEPTED" ? "Admitted" : "Rejected"}
+              </span>
+              <span className="text-ink-700">{h.result === "ACCEPTED" ? `${h.attendee}` : h.reason}</span>
+              <span className="text-xs text-ink-700/70">{h.at}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
