@@ -1,0 +1,42 @@
+EventPass agent handoff
+
+Workspace: /home/danccodedev/Desktop/eventpass
+
+Completed work:
+- Initialized git repo and pushed master branch to GitHub remote origin.
+- Added docker-compose.yml for local Postgres (postgres:16-alpine, port 5432) and .env.local to override DATABASE_URL for local development.
+- Added .env.local to .gitignore.
+- Verified local DB schema with `DATABASE_URL="postgresql://eventpass:eventpass@localhost:5432/eventpass?schema=public" npx prisma db push`.
+- Seeded local DB with `npx tsx prisma/seed.ts`.
+- Confirmed localhost:3000 returns 200 after local DB startup.
+- Updated organizer event creation page to use two submit buttons: "Save as draft" and "Continue to add tickets".
+- Confirmed ticket type table auto-updates after add.
+- Reworked scan page to show camera view correctly, use a 5s verify animation, show admit/reject results, and preserve scan log after stop.
+- Removed stray `wget-log` file from git history and committed fix.
+
+Current issues / status:
+- Vercel deployment is not showing latest code; production deployment still running old initial commit.
+- Vercel runtime log shows `MissingSecret: Please define a secret` from Auth.js, meaning `AUTH_SECRET` is missing in the Vercel environment.
+- `DATABASE_URL` was also missing earlier but has been corrected locally; verify Vercel env vars include both `DATABASE_URL` and `AUTH_SECRET`.
+- The repo remote is set to https://github.com/JoshuaLaloyo/eventpass.git and master branch is used locally.
+- The latest working commit is `42dd03f` on master.
+
+Next steps:
+1. Confirm Vercel project environment variables:
+   - DATABASE_URL (Neon connection string, Production/Preview/Development checked)
+   - AUTH_SECRET (must be set, Production/Preview/Development checked)
+   - APP_URL / AUTH_URL set to the deployed URL on production.
+   - PAYMENT_PROVIDER, PLATFORM_COMMISSION_PERCENT, ADMIN_EMAIL, ADMIN_PASSWORD, SEED_TEST_ACCOUNTS as needed.
+2. In Vercel deployment list, switch filter to Preview or All, find the latest preview deployment from master, and promote it to Production.
+3. If promotion is not possible or env vars were missing, trigger a redeploy after fixing env vars.
+4. Test on deployed site with phone camera access to ensure `/scan` page camera feed and QR scanning work.
+5. If the next goal is Flutterwave testing, set `PAYMENT_PROVIDER=flutterwave` and configure the Flutterwave keys in Vercel env vars.
+
+Local commands to resume work:
+- docker compose up -d
+- npm run dev
+- git push origin master
+
+Notes:
+- There is also a stray file `The.Bride.2026.1080p.BluRay.x264.AAC5.1-LAMA.WT11.mp4` on disk, not committed.
+- Do not remove the original `.env` Neon config; the local override is `.env.local` only.
