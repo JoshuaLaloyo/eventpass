@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getPublishedEvent } from "@/lib/events";
 import { ugx, REFUND_POLICY_TEXT } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function EventDetails({ params }: { params: { id: string } }) {
-  const event = await prisma.event.findUnique({ where: { id: params.id }, include: { ticketTypes: true } });
-  if (!event || event.status !== "PUBLISHED") notFound();
+  const event = await getPublishedEvent(params.id);
+  if (!event) notFound();
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_360px]">

@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getPublishedEvents } from "@/lib/events";
 import { handleRouteError } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
   try {
     const search = req.nextUrl.searchParams.get("search")?.trim();
-    const events = await prisma.event.findMany({
-      where: {
-        status: "PUBLISHED",
-        ...(search
-          ? { OR: [{ title: { contains: search, mode: "insensitive" } }, { venue: { contains: search, mode: "insensitive" } }] }
-          : {}),
-      },
-      orderBy: { date: "asc" },
-      include: { ticketTypes: true },
-    });
+    const events = await getPublishedEvents(search);
     return NextResponse.json({
       events: events.map((e) => ({
         id: e.id,

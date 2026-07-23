@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/auth";
+import { requireRole, requireOwnedOrder } from "@/lib/auth";
 import { jsonError, handleRouteError, paymentProvider } from "@/lib/utils";
 import { fulfillOrder, failOrder } from "@/lib/fulfill";
 
@@ -10,10 +9,7 @@ export async function POST(req: NextRequest) {
     if (paymentProvider() !== "mock") return jsonError(404, "NOT_FOUND", "Mock payments are disabled");
     const user = await requireRole("CUSTOMER");
     const { orderId, outcome } = await req.json();
-
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
-    if (!order) return jsonError(404, "NOT_FOUND", "Order not found");
-    if (order.userId !== user.id) return jsonError(403, "NOT_OWNER", "This is not your order");
+    await requireOwnedOrder(user, orderId);
 
     const ref = `MOCK-${orderId}`;
     if (outcome === "success") {

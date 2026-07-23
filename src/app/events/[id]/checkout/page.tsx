@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { ugx } from "@/lib/utils";
 
 type EventData = {
   id: string;
@@ -9,8 +10,6 @@ type EventData = {
   refundPolicyText: string;
   ticketTypes: { id: string; name: string; price: number; remaining: number }[];
 };
-
-const ugx = (n: number) => "UGX " + Math.round(n).toLocaleString("en-US");
 
 export default function Checkout() {
   const { id } = useParams<{ id: string }>();

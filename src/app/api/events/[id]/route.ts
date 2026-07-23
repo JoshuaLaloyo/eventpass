@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getPublishedEvent } from "@/lib/events";
 import { jsonError, handleRouteError, REFUND_POLICY_TEXT } from "@/lib/utils";
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const event = await prisma.event.findUnique({ where: { id: params.id }, include: { ticketTypes: true } });
-    if (!event || event.status !== "PUBLISHED") return jsonError(404, "NOT_FOUND", "Event not found");
+    const event = await getPublishedEvent(params.id);
+    if (!event) return jsonError(404, "NOT_FOUND", "Event not found");
     return NextResponse.json({
       event: {
         id: event.id,

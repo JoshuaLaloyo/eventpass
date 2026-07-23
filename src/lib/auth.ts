@@ -87,3 +87,19 @@ export async function requireRole(...roles: Role[]): Promise<SessionUser> {
   if (roles.length && !roles.includes(user.role)) throw { status: 403, code: "FORBIDDEN", message: "You do not have access to this action" };
   return user;
 }
+
+/** Loads an event (with its ticket types) and throws a Response-friendly 404/403 unless it belongs to `user`. */
+export async function requireOwnedEvent(user: SessionUser, eventId: string) {
+  const event = await prisma.event.findUnique({ where: { id: eventId }, include: { ticketTypes: true } });
+  if (!event) throw { status: 404, code: "NOT_FOUND", message: "Event not found" };
+  if (event.organizerId !== user.id) throw { status: 403, code: "NOT_OWNER", message: "This is not your event" };
+  return event;
+}
+
+/** Loads an order and throws a Response-friendly 404/403 unless it belongs to `user`. */
+export async function requireOwnedOrder(user: SessionUser, orderId: string) {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) throw { status: 404, code: "NOT_FOUND", message: "Order not found" };
+  if (order.userId !== user.id) throw { status: 403, code: "NOT_OWNER", message: "This is not your order" };
+  return order;
+}

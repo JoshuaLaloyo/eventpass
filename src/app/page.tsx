@@ -1,21 +1,12 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getPublishedEvents } from "@/lib/events";
 import { ugx } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function Browse({ searchParams }: { searchParams: { search?: string } }) {
   const search = searchParams.search?.trim();
-  const events = await prisma.event.findMany({
-    where: {
-      status: "PUBLISHED",
-      ...(search
-        ? { OR: [{ title: { contains: search, mode: "insensitive" } }, { venue: { contains: search, mode: "insensitive" } }] }
-        : {}),
-    },
-    orderBy: { date: "asc" },
-    include: { ticketTypes: true },
-  });
+  const events = await getPublishedEvents(search);
 
   return (
     <div>

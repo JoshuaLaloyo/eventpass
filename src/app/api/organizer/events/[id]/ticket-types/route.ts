@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/auth";
+import { requireRole, requireOwnedEvent } from "@/lib/auth";
 import { jsonError, handleRouteError } from "@/lib/utils";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await requireRole("ORGANIZER");
-    const event = await prisma.event.findUnique({ where: { id: params.id } });
-    if (!event) return jsonError(404, "NOT_FOUND", "Event not found");
-    if (event.organizerId !== user.id) return jsonError(403, "NOT_OWNER", "This is not your event");
+    const event = await requireOwnedEvent(user, params.id);
 
     const body = await req.json();
     const name = String(body.name || "").trim();

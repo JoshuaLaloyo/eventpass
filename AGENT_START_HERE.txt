@@ -1,42 +1,26 @@
 EventPass agent handoff
 
 Workspace: /home/danccodedev/Desktop/eventpass
+Repo: https://github.com/JoshuaLaloyo/eventpass.git, branch master (local == origin, HEAD fb1339e)
+Vercel project: eventpass-clhp, prod domain eventpass-clhp.vercel.app, Production Branch = master (confirmed correct)
 
-Completed work:
-- Initialized git repo and pushed master branch to GitHub remote origin.
-- Added docker-compose.yml for local Postgres (postgres:16-alpine, port 5432) and .env.local to override DATABASE_URL for local development.
-- Added .env.local to .gitignore.
-- Verified local DB schema with `DATABASE_URL="postgresql://eventpass:eventpass@localhost:5432/eventpass?schema=public" npx prisma db push`.
-- Seeded local DB with `npx tsx prisma/seed.ts`.
-- Confirmed localhost:3000 returns 200 after local DB startup.
-- Updated organizer event creation page to use two submit buttons: "Save as draft" and "Continue to add tickets".
-- Confirmed ticket type table auto-updates after add.
-- Reworked scan page to show camera view correctly, use a 5s verify animation, show admit/reject results, and preserve scan log after stop.
-- Removed stray `wget-log` file from git history and committed fix.
+Done:
+- Git init, GitHub push, Vercel Git integration wired up.
+- docker-compose.yml (postgres:16-alpine) + .env.local override for offline local dev. .env keeps Neon (prod) URL; .env.local gitignored.
+- Vercel env vars DATABASE_URL + AUTH_SECRET were missing -> added; user must confirm Production scope is checked for both, and Preview/Development too (Preview deploys were failing on MissingSecret).
+- organizer/events/new: two submit buttons ("Save as draft" -> /organizer, "Continue to add tickets" -> event page), via SubmitEvent.submitter.
+- organizer/events/[id]: ticket-type table already auto-refreshes on add (no change needed).
+- /scan page fully reworked (src/app/scan/page.tsx): camera view mounts via useEffect keyed on `running` (fixes 0x0 video bug from starting camera before container was visible); 5s "Verifying..." sweep animation -> green tick/red cross result overlay -> auto-resume; scan log now in its own always-visible card (persists after Stop) with admitted/rejected counts. CSS keyframes in src/app/globals.css (.animate-scan-sweep, .animate-pop-in).
+- Removed stray wget-log from repo. NOTE: The.Bride.2026...mp4 (bogus 153-byte failed wget download) still sits untracked on disk, not committed, user hasn't said delete it.
 
-Current issues / status:
-- Vercel deployment is not showing latest code; production deployment still running old initial commit.
-- Vercel runtime log shows `MissingSecret: Please define a secret` from Auth.js, meaning `AUTH_SECRET` is missing in the Vercel environment.
-- `DATABASE_URL` was also missing earlier but has been corrected locally; verify Vercel env vars include both `DATABASE_URL` and `AUTH_SECRET`.
-- The repo remote is set to https://github.com/JoshuaLaloyo/eventpass.git and master branch is used locally.
-- The latest working commit is `42dd03f` on master.
+Known loose end (was mid-fix when handed off):
+- Vercel had several "Production"-tagged deployments that were just redeploys of the stale first commit (f1ebfee); real pushes (42dd03f, 063e848) landed as Preview. Fix in progress: filter Deployments list to "All", find latest Preview build, use its ... menu -> "Promote to Production". Confirm this actually landed before assuming prod is current.
 
-Next steps:
-1. Confirm Vercel project environment variables:
-   - DATABASE_URL (Neon connection string, Production/Preview/Development checked)
-   - AUTH_SECRET (must be set, Production/Preview/Development checked)
-   - APP_URL / AUTH_URL set to the deployed URL on production.
-   - PAYMENT_PROVIDER, PLATFORM_COMMISSION_PERCENT, ADMIN_EMAIL, ADMIN_PASSWORD, SEED_TEST_ACCOUNTS as needed.
-2. In Vercel deployment list, switch filter to Preview or All, find the latest preview deployment from master, and promote it to Production.
-3. If promotion is not possible or env vars were missing, trigger a redeploy after fixing env vars.
-4. Test on deployed site with phone camera access to ensure `/scan` page camera feed and QR scanning work.
-5. If the next goal is Flutterwave testing, set `PAYMENT_PROVIDER=flutterwave` and configure the Flutterwave keys in Vercel env vars.
+IN PROGRESS / NEXT (what the user just asked for): Audit src/ for redundant/duplicate code and simplify BEFORE starting Flutterwave sandbox testing. Not started yet beyond listing files. Full file list is in src/app (pages + api routes), src/lib (auth.ts, prisma.ts, fulfill.ts, flutterwave.ts, email.ts, ticketPdf.ts, guards.ts, utils.ts), src/components/Nav.tsx. Worth checking for: repeated ugx/currency formatting, repeated fetch+load patterns across organizer pages, repeated auth/role-check boilerplate in api routes (requireRole already centralizes this in lib/auth.ts - verify all routes use it consistently), any dead exports.
 
-Local commands to resume work:
-- docker compose up -d
-- npm run dev
-- git push origin master
+After that cleanup, user wants to move to testing real Flutterwave sandbox payments: set PAYMENT_PROVIDER=flutterwave + FLW_SECRET_KEY + FLW_SECRET_HASH in .env (and Vercel), configure webhook URL in Flutterwave dashboard to https://<domain>/api/payments/webhook, remember Flutterwave can't reach localhost so this needs the Vercel deployment (or ngrok) working first. src/lib/flutterwave.ts + src/lib/fulfill.ts hold the processor-specific code, per README section 3.
 
-Notes:
-- There is also a stray file `The.Bride.2026.1080p.BluRay.x264.AAC5.1-LAMA.WT11.mp4` on disk, not committed.
-- Do not remove the original `.env` Neon config; the local override is `.env.local` only.
+Local resume commands:
+  docker compose up -d && npm run dev
+Git identity is already configured locally (user.name/user.email set by user directly, do not touch git config).
+Pushing requires the user to run `git push origin master` themselves (personal access token needed interactively) - Claude's Bash tool cannot authenticate.

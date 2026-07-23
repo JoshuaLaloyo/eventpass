@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-
-const ugx = (n: number) => "UGX " + Math.round(n).toLocaleString("en-US");
+import { ugx } from "@/lib/utils";
 
 export default function MockPayment() {
   const { orderId } = useParams<{ orderId: string }>();

@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-
-const ugx = (n: number) => "UGX " + Math.round(n).toLocaleString("en-US");
+import { ugx } from "@/lib/utils";
 
 type Sales = {
   total: { sold: number; revenue: number };
